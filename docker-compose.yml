@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  # Next.js Application Service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: health_tracker_app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD:-postgrespassword}@postgres:5432/healthtracker?schema=public
+      - REDIS_URL=redis://redis:6379
+      - HEALTH_SYNC_WEBHOOK_SECRET=${HEALTH_SYNC_WEBHOOK_SECRET:-dev-webhook-secret-key-32chars}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - internal_net
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: health_tracker_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgrespassword}
+      POSTGRES_DB: ${POSTGRES_DB:-healthtracker}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d healthtracker"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal_net
+
+  # Redis for Queuing & Caching
+  redis:
+    image: redis:7-alpine
+    container_name: health_tracker_redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal_net
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  internal_net:
+    driver: bridge
