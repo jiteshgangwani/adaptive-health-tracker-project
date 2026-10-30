@@ -2,7 +2,7 @@
 
 Adaptive Health & Nutrition Tracker is a Next.js and TypeScript project for calculating evidence-based nutrition targets and adjusting a meal plan based on recent activity. It uses the Mifflin-St Jeor equation for BMR, supports activity and occupation profiles, and includes server routes for plan adaptation, meal-intake updates, and health-platform webhooks.
 
-> **Project status:** The calculation engine and API routes are implemented, but the product UI is not yet assembled into a homepage. The current root URL (`/`) may return 404; API documentation is available at `/api-docs`. There is no server-side database connected, so API requests are processed and returned without being saved.
+> **Project status:** The homepage provides a responsive nutrition and movement dashboard with editable profile inputs and local meal/step tracking. Nutrition targets use the calculation engine; activity-driven plan adaptation is available through the API but is not yet connected to the dashboard. There is no server-side database, so dashboard data stays in browser storage and API requests are not saved.
 
 ## Features
 
@@ -29,7 +29,7 @@ npm install --legacy-peer-deps
 npm run dev
 ```
 
-Open [http://localhost:3000/api-docs](http://localhost:3000/api-docs) to explore the API. The project currently has no homepage route, so `/` is not the app entry point.
+Open [http://localhost:3000](http://localhost:3000) for the dashboard, or [http://localhost:3000/api-docs](http://localhost:3000/api-docs) to explore the API.
 
 Useful commands:
 
@@ -144,7 +144,7 @@ These are software calculations, not medical advice. Nutrition targets should be
 
 ## Data and Persistence
 
-- The meal timeline stores checked meal slots in browser `localStorage`, using a key based on user ID and date. This is local to that browser and device.
+- The dashboard stores the editable profile and daily checked meal slots and step count in browser `localStorage`. This is local to that browser and device.
 - API handlers currently validate, calculate, normalize, and return data; they do not save profiles, meal plans, intake, or activity records to a server database.
 - An IndexedDB persister helper exists in `lib/queryClient.ts`, but it is not currently wired into a provider or app page.
 - `useAdaptPlan` includes a request to `GET /api/plans`, but that API route has not been implemented.
@@ -153,6 +153,8 @@ These are software calculations, not medical advice. Nutrition targets should be
 
 ```text
 app/
+	page.tsx                 responsive nutrition and movement dashboard
+	globals.css              dashboard styles
 	api/
 		activity-log/         PATCH meal-intake endpoint
 		adapt-plan/           next-day plan calculation endpoint
